@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideZipp - Smart Vehicle Sharing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Add previous CSS styles here */
+
+        /* New Animations */
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(100px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
+        }
+
+        .intro-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+
+        .orbiting-car {
+            animation: orbit 3s linear infinite;
+            position: absolute;
+            font-size: 2rem;
+        }
+
+        .main-content {
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        /* Advanced Form Styles */
+        .choice-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+
+        .choice-card {
+            padding: 2rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid var(--primary-color);
+        }
+
+        .choice-card:hover {
+            transform: translateY(-5px);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .ride-form {
+            display: none;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .form-active {
+            display: block;
+            opacity: 1;
+        }
+
+        .dynamic-form {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .route-input {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Advanced Search Results */
+        .search-results {
+            display: grid;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .ride-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+            transform: translateX(-50px);
+            opacity: 0;
+        }
+
+        .ride-card.visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro-animation">
+        <div class="logo">Ride<span>Zipp</span></div>
+        <i class="fas fa-car orbiting-car"></i>
+    </div>
+
+    <div class="main-content">
+        <!-- Keep previous navigation and other sections -->
+
+        <!-- New Dynamic Section -->
+        <section class="ride-selection">
+            <div class="container">
+                <div class="choice-container">
+                    <div class="choice-card" onclick="showForm('create')">
+                        <h3>Create a Ride</h3>
+                        <p>Share your journey and save costs</p>
+                    </div>
+                    <div class="choice-card" onclick="showForm('search')">
+                        <h3>Search for Ride</h3>
+                        <p>Find your perfect travel match</p>
+                    </div>
+                </div>
+
+                <!-- Create Ride Form -->
+                <form id="createRideForm" class="ride-form dynamic-form">
+                    <h2>Create New Ride</h2>
+                    <div class="route-input">
+                        <input type="text" placeholder="Starting Point" required>
+                        <input type="text" placeholder="Destination" required>
+                    </div>
+                    <div class="form-grid">
+                        <select id="vehicleType" required>
+                            <option value="">Select Vehicle Type</option>
+                            <option value="car">Car</option>
+                            <option value="suv">SUV</option>
+                            <option value="van">Van</option>
+                        </select>
+                        <input type="datetime-local" required>
+                        <input type="number" placeholder="Available Seats" min="1" max="8" required>
+                    </div>
+                    <div class="amenities">
+                        <label><input type="checkbox"> AC</label>
+                        <label><input type="checkbox"> WiFi</label>
+                        <label><input type="checkbox"> Pet Friendly</label>
+                    </div>
+                    <button class="cta-button">Publish Ride</button>
+                </form>
+
+                <!-- Search Ride Form -->
+                <form id="searchRideForm" class="ride-form dynamic-form">
+                    <h2>Find Your Ride</h2>
+                    <div class="route-input">
+                        <input type="text" placeholder="From" id="source" required>
+                        <input type="text" placeholder="To" id="destination" required>
+                    </div>
+                    <div class="form-grid">
+                        <input type="date" required>
+                        <select id="seatPreference">
+                            <option value="">Any Seat</option>
+                            <option value="front">Front Seat</option>
+                            <option value="back">Back Seat</option>
+                        </select>
+                        <select id="vehicleFilter">
+                            <option value="">Any Vehicle</option>
+                            <option value="car">Car</option>
+                            <option value="suv">SUV</option>
+                        </select>
+                    </div>
+                    <button class="cta-button">Search Rides</button>
+                </form>
+
+                <!-- Search Results -->
+                <div class="search-results" id="searchResults"></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Initial Animation
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelector('.intro-animation').remove();
+                document.querySelector('.main-content').style.opacity = '1';
+            }, 3000);
+        });
+
+        function showForm(formType) {
+            document.querySelectorAll('.ride-form').forEach(form => {
+                form.classList.remove('form-active');
+            });
+            document.querySelectorAll('.choice-card').forEach(card => {
+                card.style.background = 'rgba(255, 255, 255, 0.1)';
+            });
+            
+            if(formType === 'create') {
+                document.getElementById('createRideForm').classList.add('form-active');
+                event.target.closest('.choice-card').style.background = 'var(--primary-color)';
+            } else {
+                document.getElementById('searchRideForm').classList.add('form-active');
+                event.target.closest('.choice-card').style.background = 'var(--primary-color)';
+            }
+        }
+
+        // Sample Search Results Animation
+        function showResults() {
+            const results = document.getElementById('searchResults');
+            results.innerHTML = Array(5).fill().map((_, i) => `
+                <div class="ride-card" style="transition-delay: ${i * 0.1}s">
+                    <h4>New York to Boston</h4>
+                    <p><i class="fas fa-car"></i> SUV · 3 seats available</p>
+                    <p><i class="fas fa-clock"></i> Departure: 09:00 AM</p>
+                </div>
+            `).join('');
+
+            setTimeout(() => {
+                document.querySelectorAll('.ride-card').forEach(card => {
+                    card.classList.add('visible');
+                });
+            }, 100);
+        }
+    </script>
+</body>
+</html>
